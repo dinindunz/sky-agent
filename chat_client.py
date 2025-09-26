@@ -45,17 +45,77 @@ class AgentChatClient:
         """Format the agent's response for display."""
         if "error" in response:
             return f"❌ Error: {response['error']}"
-        
+
+        # Handle the new response format from sky-swarm
+        if "status" in response:
+            status = response["status"]
+            if status == "Status.FAILED":
+                return f"❌ Agent failed to process request. Status: {status}"
+
+            if "results" in response and response["results"]:
+                # Extract results from the swarm response
+                results = response["results"]
+                if isinstance(results, dict):
+                    formatted_responses = []
+
+                    # Process each agent's response
+                    for agent_name, agent_result in results.items():
+                        if "result" in agent_result:
+                            result = agent_result["result"]
+
+                            # Extract the message content
+                            message_text = self._extract_message_text(result)
+                            if message_text:
+                                # Add agent name if multiple agents responded
+                                if len(results) > 1:
+                                    formatted_responses.append(f"🔸 **{agent_name}**: {message_text}")
+                                else:
+                                    formatted_responses.append(message_text)
+
+                    if formatted_responses:
+                        return "\n".join(formatted_responses)
+
+                return f"✅ Status: {status}\n📊 Results: {response['results']}"
+
+        # Handle legacy format
         if "result" in response:
             result = response["result"]
-            if isinstance(result, dict) and "content" in result:
-                content = result["content"]
-                if isinstance(content, list) and len(content) > 0:
-                    return content[0].get("text", "No text content found")
-            elif isinstance(result, str):
-                return result
-        
-        return "❓ Unexpected response format"
+            message_text = self._extract_message_text(result)
+            if message_text:
+                return message_text
+
+        return f"❓ Unexpected response format: {response}"
+
+    def _extract_message_text(self, result: Any) -> str:
+        """Extract clean text from various result formats."""
+        if isinstance(result, str):
+            return result
+
+        if isinstance(result, dict):
+            # Try to get message content from different possible structures
+            if "message" in result and isinstance(result["message"], dict):
+                message = result["message"]
+                if "content" in message and isinstance(message["content"], list):
+                    # Extract text from content array
+                    text_parts = []
+                    for content_item in message["content"]:
+                        if isinstance(content_item, dict) and "text" in content_item:
+                            text_parts.append(content_item["text"])
+                    return " ".join(text_parts) if text_parts else ""
+
+            # Direct content access
+            if "content" in result and isinstance(result["content"], list):
+                text_parts = []
+                for content_item in result["content"]:
+                    if isinstance(content_item, dict) and "text" in content_item:
+                        text_parts.append(content_item["text"])
+                return " ".join(text_parts) if text_parts else ""
+
+            # Simple text field
+            if "text" in result:
+                return result["text"]
+
+        return ""
     
     def run_chat(self):
         """Run the continuous chat interface."""
@@ -66,7 +126,7 @@ class AgentChatClient:
         print("🔍 Checking agent health...")
         if not self.check_health():
             print("❌ Agent is not running or not healthy!")
-            print("   Please start the agent with: python das_agent.py")
+            print("   Please start the agent with: python sky_swarm.py")
             sys.exit(1)
         
         print("✅ Agent is running and healthy!")

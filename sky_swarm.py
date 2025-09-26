@@ -4,6 +4,9 @@ from strands_tools import use_aws
 from strands.multiagent import Swarm
 from tools.claude_code import claude_code_assistant
 from tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
+from fastapi import FastAPI
+from pydantic import BaseModel
+import uvicorn
 
 # Enable debug logs and print them to stderr
 logging.getLogger("strands.multiagent").setLevel(logging.DEBUG)
@@ -65,12 +68,38 @@ swarm = Swarm(
     repetitive_handoff_min_unique_agents=3
 )
 
-# Example usage
-if __name__ == "__main__":
-    # Execute the swarm on a multicloud task
-    result = swarm("Deploy a web application with database across AWS and Azure for high availability")
+app = FastAPI()
 
-    # Access the final result
-    print(f"Status: {result.status}")
-    print(f"Node history: {[node.node_id for node in result.node_history]}")
-    print(f"Final response: {result.final_response}")
+class InvokeRequest(BaseModel):
+    prompt: str
+
+@app.post("/invoke")
+async def invoke_agent(request: InvokeRequest):
+    """Invoke the agent with a prompt"""
+    try:
+        # Execute the swarm on a multicloud task
+        result = swarm(request.prompt)
+
+        # Access the final result
+        # print(f"Status: {result.status}")
+        # print(f"Node history: {[node.node_id for node in result.node_history]}")
+        # print(f"Final response: {result.final_response}")
+
+        response_data = {
+            "status": str(result.status),
+            "node_history": [node.node_id for node in result.node_history],
+            "results": result.results if result.results else "No results available"
+        }
+
+        return response_data
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    print("Starting a FastAPI agent server on port 8080...")
+    uvicorn.run(app, host="0.0.0.0", port=8080)
