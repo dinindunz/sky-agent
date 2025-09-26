@@ -1,7 +1,0 @@
-strands-agents
-strands-agents-tools
-mcp
-claude-code-sdk
-fastapi
-uvicorn
-pydantic

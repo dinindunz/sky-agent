@@ -29,7 +29,7 @@ async def call_claude_sdk(prompt: str) -> str:
 
         # Configure claude-code-sdk options
         options = ClaudeCodeOptions(
-            system_prompt="You are an expert software engineer and code analyst. Provide clear, well-documented code and thorough analysis.",
+            system_prompt=CLAUDE_CODE_PROMPT,
             allowed_tools=["Bash", "Read", "Edit", "WebSearch"],
             max_turns=10
         )

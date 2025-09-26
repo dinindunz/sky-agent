@@ -2,8 +2,8 @@ import logging
 from strands import Agent
 from strands_tools import use_aws
 from strands.multiagent import Swarm
-from tools.claude_code import claude_code_assistant
-from tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
+from src.tools.claude_code import claude_code_assistant
+from src.tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
@@ -100,6 +100,10 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the sky-agent application."""
     print("Starting a FastAPI agent server on port 8080...")
     uvicorn.run(app, host="0.0.0.0", port=8080)
+
+if __name__ == "__main__":
+    main()
