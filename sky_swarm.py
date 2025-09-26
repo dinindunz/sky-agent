@@ -3,6 +3,7 @@ from strands import Agent
 from strands_tools import use_aws
 from strands.multiagent import Swarm
 from tools.claude_code import claude_code_assistant
+from tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
 
 # Enable debug logs and print them to stderr
 logging.getLogger("strands.multiagent").setLevel(logging.DEBUG)
@@ -37,13 +38,24 @@ Hand off tasks to other cloud specialists when they involve AWS or GCP.""",
 gcp_agent = Agent(
     name="gcp_agent",
     system_prompt="""You are a Google Cloud Platform specialist agent focused on GCP operations.
+Your expertise includes Compute Engine, GKE, Cloud Storage, Cloud SQL, BigQuery, Cloud Functions, and all GCP services.
+Use 'use_gcp' tool with gcloud commands (e.g., use_gcp('compute instances list')) to manage resources.
 Hand off tasks to other cloud specialists when they involve AWS or Azure.""",
+    tools=[use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info]
+)
+
+coding_agent = Agent(
+    name="coding_agent",
+    system_prompt="""You are a specialized coding agent focused on software development and code analysis.
+Your expertise includes code generation, debugging, refactoring, testing, and development workflows.
+Use Claude Code SDK for complex development tasks requiring file operations, code analysis, or system commands.
+Hand off cloud-specific tasks to appropriate cloud specialists (AWS, Azure, GCP).""",
     tools=[claude_code_assistant]
 )
 
 # Create a swarm with these agents, starting with the multicloud coordinator
 swarm = Swarm(
-    [sky_agent, aws_agent, azure_agent, gcp_agent],
+    [sky_agent, aws_agent, azure_agent, gcp_agent, coding_agent],
     entry_point=sky_agent,  # Start with the coordinator
     max_handoffs=20,
     max_iterations=20,
