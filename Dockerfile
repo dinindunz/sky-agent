@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 8081
 
-CMD ["python", "sky_swarm.py"]
+CMD ["python", "sky_agent.py"]

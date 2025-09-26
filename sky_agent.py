@@ -77,7 +77,7 @@ class InvokeRequest(BaseModel):
 async def invoke_agent(request: InvokeRequest):
     """Invoke the agent with a prompt"""
     try:
-        # Execute the swarm on a multicloud task
+        # Execute the sky-agent swarm with the given prompt
         result = swarm(request.prompt)
 
         # Access the final result

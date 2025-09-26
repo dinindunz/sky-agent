@@ -1,1 +1,1 @@
-# sky-swarm
+# sky-agent

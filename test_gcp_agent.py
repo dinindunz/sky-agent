@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Test script for GCP agent functionality in sky-swarm
+Test script for GCP agent functionality in sky-agent
 """
 
 import logging
-from sky_swarm import gcp_agent
+from sky_agent import gcp_agent
 
 # Configure logging
 logging.basicConfig(

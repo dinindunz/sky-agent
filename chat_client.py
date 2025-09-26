@@ -46,14 +46,14 @@ class AgentChatClient:
         if "error" in response:
             return f"❌ Error: {response['error']}"
 
-        # Handle the new response format from sky-swarm
+        # Handle the new response format from sky-agent
         if "status" in response:
             status = response["status"]
             if status == "Status.FAILED":
                 return f"❌ Agent failed to process request. Status: {status}"
 
             if "results" in response and response["results"]:
-                # Extract results from the swarm response
+                # Extract results from the sky-agent response
                 results = response["results"]
                 if isinstance(results, dict):
                     formatted_responses = []
@@ -126,7 +126,7 @@ class AgentChatClient:
         print("🔍 Checking agent health...")
         if not self.check_health():
             print("❌ Agent is not running or not healthy!")
-            print("   Please start the agent with: python sky_swarm.py")
+            print("   Please start the agent with: python sky_agent.py")
             sys.exit(1)
         
         print("✅ Agent is running and healthy!")
