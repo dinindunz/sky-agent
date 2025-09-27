@@ -4,6 +4,7 @@ from strands_tools import use_aws
 from strands.multiagent import Swarm
 from src.tools.claude_code import claude_code_assistant
 from src.tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
+from src.tools.use_azure import use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
@@ -34,8 +35,10 @@ Hand off tasks to other cloud specialists when they involve Azure or GCP.""",
 azure_agent = Agent(
     name="azure_agent",
     system_prompt="""You are a Microsoft Azure specialist agent focused on Azure cloud operations.
+Your expertise includes Virtual Machines, AKS, Storage Accounts, Azure SQL, Function Apps, and all Azure services.
+Use 'use_azure' tool with az commands (e.g., use_azure('vm list')) to manage resources.
 Hand off tasks to other cloud specialists when they involve AWS or GCP.""",
-    tools=[claude_code_assistant]
+    tools=[use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location]
 )
 
 gcp_agent = Agent(
