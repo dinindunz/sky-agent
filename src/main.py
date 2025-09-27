@@ -1,8 +1,10 @@
 import logging
 from strands import Agent
 from strands_tools import use_aws
+from strands.tools.mcp.mcp_client import MCPClient
 from strands.multiagent import Swarm
-from src.tools.claude_code import claude_code_assistant
+from mcp.client.streamable_http import streamablehttp_client
+from src.tools.claude_code import claude_code
 from src.tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
 from src.tools.use_azure import use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location
 from fastapi import FastAPI
@@ -21,15 +23,14 @@ sky_agent = Agent(
     name="sky_agent",
     system_prompt="""You are a multi-cloud coordinator agent specializing in cross-cloud operations.
 You coordinate tasks across AWS, Azure, and GCP. Start by analyzing which cloud providers
-are involved and delegate to appropriate specialists.""",
-    tools=[claude_code_assistant]
+are involved and delegate to appropriate specialists."""
 )
 
 aws_agent = Agent(
     name="aws_agent",
     system_prompt="""You are an AWS specialist agent focused on AWS cloud operations.
 Hand off tasks to other cloud specialists when they involve Azure or GCP.""",
-    tools=[use_aws, claude_code_assistant]
+    tools=[use_aws]
 )
 
 azure_agent = Agent(
@@ -56,12 +57,26 @@ coding_agent = Agent(
 Your expertise includes code generation, debugging, refactoring, testing, and development workflows.
 Use Claude Code SDK for complex development tasks requiring file operations, code analysis, or system commands.
 Hand off cloud-specific tasks to appropriate cloud specialists (AWS, Azure, GCP).""",
-    tools=[claude_code_assistant]
+    tools=[claude_code]
+)
+
+atlassian_mcp_client = MCPClient(lambda: streamablehttp_client("http://atlassian:9000/mcp"))
+atlassian_mcp_client.start()
+atlassian = atlassian_mcp_client.list_tools_sync()
+
+# Create Atlassian agent with MCP tools
+atlassian_agent = Agent(
+    name="atlassian_agent",
+    system_prompt="""You are an Atlassian specialist agent focused on Jira and Confluence operations.
+Your expertise includes managing Jira issues, projects, workflows, and Confluence pages and spaces.
+Use the available MCP tools to interact with Jira and Confluence.
+Hand off tasks to other specialists when they don't involve Atlassian products.""",
+    tools=[atlassian]
 )
 
 # Create a swarm with these agents, starting with the multicloud coordinator
 swarm = Swarm(
-    [sky_agent, aws_agent, azure_agent, gcp_agent, coding_agent],
+    [sky_agent, aws_agent, azure_agent, gcp_agent, coding_agent, atlassian_agent],
     entry_point=sky_agent,  # Start with the coordinator
     max_handoffs=20,
     max_iterations=20,
@@ -105,8 +120,8 @@ async def health_check():
 
 def main():
     """Main entry point for the sky-agent application."""
-    print("Starting a FastAPI agent server on port 8080...")
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    print("Starting a FastAPI agent server on port 8000...")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  sky-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.sky-agent
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ~/.aws:/root/.aws:ro
+    restart: unless-stopped
+    depends_on:
+      - atlassian
+
+  atlassian:
+    build:
+      context: .
+      dockerfile: Dockerfile.atlassian
+    ports:
+      - "9000:9000"
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+networks:
+  default:
+    name: sky-agent-network

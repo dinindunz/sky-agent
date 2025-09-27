@@ -58,7 +58,7 @@ async def call_claude_sdk(prompt: str) -> str:
 
 
 @tool
-def claude_code_assistant(prompt: str) -> str:
+def claude_code(prompt: str) -> str:
     """
     Execute complex development tasks using Claude Code SDK with full tooling capabilities.
 

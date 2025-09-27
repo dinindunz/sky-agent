@@ -3,7 +3,7 @@
 Continuous Chat Interface for BedrockAgentCore Agent
 
 This script provides a command-line chat interface to interact with the
-BedrockAgentCore agent running on localhost:8081.
+BedrockAgentCore agent running on localhost:8000.
 """
 
 import requests
@@ -12,7 +12,7 @@ import sys
 from typing import Dict, Any
 
 class AgentChatClient:
-    def __init__(self, base_url: str = "http://127.0.0.1:8081"):
+    def __init__(self, base_url: str = "http://127.0.0.1:8000"):
         self.base_url = base_url
         self.session = requests.Session()
         self.session.headers.update({"Content-Type": "application/json"})
@@ -191,8 +191,8 @@ def main():
     )
     parser.add_argument(
         "--url",
-        default="http://127.0.0.1:8081",
-        help="Base URL of the agent (default: http://127.0.0.1:8081)"
+        default="http://127.0.0.1:8000",
+        help="Base URL of the agent (default: http://127.0.0.1:8000)"
     )
     
     args = parser.parse_args()

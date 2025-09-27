@@ -51,11 +51,11 @@ RUN if [ -f "/app/keys/azure.json" ]; then \
 RUN if [ -f "/app/keys/gcp.json" ]; then \
         gcloud auth activate-service-account \
             --key-file=/app/keys/gcp.json \
-            --project=$(cat /app/keys/gcp.json | jq -r '.project_id') \
+            --project=$(cat /app/keys/gcp.json | jq -r '.project_id'); \
     else \
         echo "Warning: GCP config not found at /app/keys/gcp.json"; \
     fi
 
-EXPOSE 8081
+EXPOSE 8000
 
 CMD ["uv", "run", "sky-agent"]
