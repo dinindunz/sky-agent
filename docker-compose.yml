@@ -14,15 +14,32 @@ services:
     restart: unless-stopped
     depends_on:
       - atlassian
+      - github
 
   atlassian:
     build:
       context: .
-      dockerfile: Dockerfile.atlassian
+      dockerfile: ./mcp-servers/Dockerfile.atlassian
     ports:
       - "9000:9000"
     stdin_open: true
     tty: true
+    restart: unless-stopped
+
+  github:
+    build:
+      context: .
+      dockerfile: ./mcp-servers/Dockerfile.github
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./keys:/app/keys:ro
+    env_file:
+      - .env
+    environment:
+      - GITHUB_TOOLSETS=all
+      - GITHUB_DYNAMIC_TOOLSETS=1
+      - GITHUB_READ_ONLY=1
     restart: unless-stopped
 
 networks:

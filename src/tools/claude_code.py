@@ -30,7 +30,15 @@ async def call_claude_sdk(prompt: str) -> str:
         # Configure claude-code-sdk options
         options = ClaudeCodeOptions(
             system_prompt=CLAUDE_CODE_PROMPT,
-            allowed_tools=["Bash", "Read", "Edit", "WebSearch"],
+            mcp_servers=[
+              {
+                  "name": "github",
+                  "url": "http://github:9001",
+                  "transport": "http"
+              },
+            ],
+            allowed_tools=["Bash", "Read", "Edit", "WebSearch", "mcp__github__*"],
+            permission_mode='acceptEdits',
             max_turns=10
         )
 

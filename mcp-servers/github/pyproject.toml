@@ -1,0 +1,13 @@
+[project]
+name = "github-mcp-server"
+version = "0.1.0"
+description = "GitHub MCP streamable-http wrapper"
+requires-python = ">=3.13"
+dependencies = [
+    "fastmcp",
+    "uvicorn",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
