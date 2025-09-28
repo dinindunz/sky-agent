@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Continuous Chat Interface for BedrockAgentCore Agent
+Continuous Chat Interface for Sky Agent
 
 This script provides a command-line chat interface to interact with the
-BedrockAgentCore agent running on localhost:8000.
+Sky Agent running on localhost:8000.
 """
 
 import requests
@@ -11,12 +11,13 @@ import json
 import sys
 from typing import Dict, Any
 
+
 class AgentChatClient:
     def __init__(self, base_url: str = "http://127.0.0.1:8000"):
         self.base_url = base_url
         self.session = requests.Session()
         self.session.headers.update({"Content-Type": "application/json"})
-    
+
     def check_health(self) -> bool:
         """Check if the agent is running and healthy."""
         try:
@@ -24,15 +25,13 @@ class AgentChatClient:
             return response.status_code == 200
         except requests.exceptions.RequestException:
             return False
-    
+
     def send_message(self, prompt: str) -> Dict[str, Any]:
         """Send a message to the agent and return the response."""
         try:
             payload = {"prompt": prompt}
             response = self.session.post(
-                f"{self.base_url}/invoke",
-                json=payload,
-                timeout=3000
+                f"{self.base_url}/invoke", json=payload, timeout=3000
             )
             response.raise_for_status()
             return response.json()
@@ -40,7 +39,7 @@ class AgentChatClient:
             return {"error": f"Request failed: {str(e)}"}
         except json.JSONDecodeError as e:
             return {"error": f"Invalid JSON response: {str(e)}"}
-    
+
     def format_response(self, response: Dict[str, Any]) -> str:
         """Format the agent's response for display."""
         if "error" in response:
@@ -68,7 +67,9 @@ class AgentChatClient:
                             if message_text:
                                 # Add agent name if multiple agents responded
                                 if len(results) > 1:
-                                    formatted_responses.append(f"🔸 **{agent_name}**: {message_text}")
+                                    formatted_responses.append(
+                                        f"🔸 **{agent_name}**: {message_text}"
+                                    )
                                 else:
                                     formatted_responses.append(message_text)
 
@@ -116,19 +117,19 @@ class AgentChatClient:
                 return result["text"]
 
         return ""
-    
+
     def run_chat(self):
         """Run the continuous chat interface."""
-        print("🤖 BedrockAgentCore Agent Chat Interface")
+        print("🤖 Sky Agent Chat Interface")
         print("=" * 50)
-        
+
         # Check if agent is running
         print("🔍 Checking agent health...")
         if not self.check_health():
             print("❌ Agent is not running or not healthy!")
             print("   Please start the agent with: python sky_agent.py")
             sys.exit(1)
-        
+
         print("✅ Agent is running and healthy!")
         print("\n💡 Tips:")
         print("   - Type your message and press Enter")
@@ -136,7 +137,7 @@ class AgentChatClient:
         print("   - Type 'help' for assistance")
         print("   - Press Ctrl+C to force quit")
         print("\n" + "=" * 50)
-        
+
         try:
             while True:
                 # Get user input
@@ -145,29 +146,29 @@ class AgentChatClient:
                 except (EOFError, KeyboardInterrupt):
                     print("\n\n👋 Goodbye!")
                     break
-                
+
                 # Handle special commands
-                if user_input.lower() in ['quit', 'exit', 'bye']:
+                if user_input.lower() in ["quit", "exit", "bye"]:
                     print("👋 Goodbye!")
                     break
-                
-                if user_input.lower() == 'help':
+
+                if user_input.lower() == "help":
                     self.show_help()
                     continue
-                
+
                 if not user_input:
                     print("💭 Please enter a message or type 'help' for assistance.")
                     continue
-                
+
                 # Send message to agent
                 print("🤖 Agent: ", end="", flush=True)
                 response = self.send_message(user_input)
                 formatted_response = self.format_response(response)
                 print(formatted_response)
-        
+
         except KeyboardInterrupt:
             print("\n\n👋 Chat interrupted. Goodbye!")
-    
+
     def show_help(self):
         """Show help information."""
         print("\n📚 Help - Available Commands:")
@@ -182,23 +183,25 @@ class AgentChatClient:
         print("   - What are the benefits of cloud computing?")
         print("   - How do I implement CI/CD pipelines?")
 
+
 def main():
     """Main entry point."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
-        description="Continuous chat interface for BedrockAgentCore Agent"
+        description="Continuous chat interface for Sky Agent"
     )
     parser.add_argument(
         "--url",
         default="http://127.0.0.1:8000",
-        help="Base URL of the agent (default: http://127.0.0.1:8000)"
+        help="Base URL of the agent (default: http://127.0.0.1:8000)",
     )
-    
+
     args = parser.parse_args()
-    
+
     client = AgentChatClient(args.url)
     client.run_chat()
+
 
 if __name__ == "__main__":
     main()
