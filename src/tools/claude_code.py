@@ -5,7 +5,7 @@ from strands import tool
 logger = logging.getLogger(__name__)
 
 try:
-    from claude_code_sdk import ClaudeSDKClient, ClaudeCodeOptions, McpServerConfig
+    from claude_code_sdk import ClaudeSDKClient, ClaudeCodeOptions
     SDK_AVAILABLE = True
 except ImportError:
     SDK_AVAILABLE = False
@@ -27,24 +27,19 @@ async def call_claude_sdk(prompt: str) -> str:
     try:
         logger.info(f"Calling claude-code-sdk with prompt: {prompt[:100]}...")
 
-        # github_mcp = McpServerConfig(
-        #     command="npx",
-        #     args=[
-        #         "-y",
-        #         "@modelcontextprotocol/client-sse",
-        #         "http://github:9001/mcp"
-        #     ]
-        # )
-
         # Configure claude-code-sdk options
         options = ClaudeCodeOptions(
             system_prompt=CLAUDE_CODE_PROMPT,
-            # mcp_servers={"github": github_mcp},
-            allowed_tools=["Bash", "Read", "Edit", "WebSearch"],
+            allowed_tools=["mcp__github", "Bash", "Read", "Edit", "WebSearch"],
             permission_mode='acceptEdits',
             max_turns=10,
-            use_bedrock=True,
-            model="apac.anthropic.claude-sonnet-4-20250514-v1:0"
+            model="apac.anthropic.claude-sonnet-4-20250514-v1:0",
+            mcp_servers={
+                "github": {
+                    "command": "mcp-proxy",
+                    "args": ["http://mcp-proxy:8090/servers/github/sse"]
+                }
+            },
         )
 
         response_text = ""

@@ -21,12 +21,17 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+# github_mcp_client = MCPClient(lambda: sse_client("http://mcp-proxy:8090/servers/github/sse"))
+# github_mcp_client.start()
+# github = github_mcp_client.list_tools_sync()
+
 # Create specialized cloud agents
 sky_agent = Agent(
     name="sky_agent",
     system_prompt="""You are a multi-cloud coordinator agent specializing in cross-cloud operations.
 You coordinate tasks across AWS, Azure, and GCP. Start by analyzing which cloud providers
-are involved and delegate to appropriate specialists."""
+are involved and delegate to appropriate specialists.""",
+    # tools=[github]
 )
 
 aws_agent = Agent(
