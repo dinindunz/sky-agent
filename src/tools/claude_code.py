@@ -1,6 +1,7 @@
 import logging
 import asyncio
 from strands import tool
+from src.prompts.claude_code import CLAUDE_CODE_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -11,12 +12,6 @@ except ImportError:
     SDK_AVAILABLE = False
     logger.warning("claude-code-sdk not available. Install with: pip install claude-code-sdk")
 
-# Define specialized system prompt for Claude Code
-CLAUDE_CODE_PROMPT = """
-You are an expert software engineer and cloud architect specializing in multicloud operations.
-You have access to development tools for code analysis, file operations, and system commands.
-Provide clear, well-documented solutions with proper error handling and best practices.
-"""
 
 
 async def call_claude_sdk(prompt: str) -> str:

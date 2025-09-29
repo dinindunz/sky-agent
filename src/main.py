@@ -7,6 +7,12 @@ from mcp.client.sse import sse_client
 from src.tools.claude_code import claude_code
 from src.tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
 from src.tools.use_azure import use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location
+from src.prompts.sky_agent import SKY_AGENT_PROMPT
+from src.prompts.aws_agent import AWS_AGENT_PROMPT
+from src.prompts.azure_agent import AZURE_AGENT_PROMPT
+from src.prompts.gcp_agent import GCP_AGENT_PROMPT
+from src.prompts.coding_agent import CODING_AGENT_PROMPT
+from src.prompts.atlassian_agent import ATLASSIAN_AGENT_PROMPT
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -28,43 +34,31 @@ logging.basicConfig(
 # Create specialized cloud agents
 sky_agent = Agent(
     name="sky_agent",
-    system_prompt="""You are a multi-cloud coordinator agent specializing in cross-cloud operations.
-You coordinate tasks across AWS, Azure, and GCP. Start by analyzing which cloud providers
-are involved and delegate to appropriate specialists.""",
+    system_prompt=SKY_AGENT_PROMPT,
     # tools=[github]
 )
 
 aws_agent = Agent(
     name="aws_agent",
-    system_prompt="""You are an AWS specialist agent focused on AWS cloud operations.
-Hand off tasks to other cloud specialists when they involve Azure or GCP.""",
+    system_prompt=AWS_AGENT_PROMPT,
     tools=[use_aws]
 )
 
 azure_agent = Agent(
     name="azure_agent",
-    system_prompt="""You are a Microsoft Azure specialist agent focused on Azure cloud operations.
-Your expertise includes Virtual Machines, AKS, Storage Accounts, Azure SQL, Function Apps, and all Azure services.
-Use 'use_azure' tool with az commands (e.g., use_azure('vm list')) to manage resources.
-Hand off tasks to other cloud specialists when they involve AWS or GCP.""",
+    system_prompt=AZURE_AGENT_PROMPT,
     tools=[use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location]
 )
 
 gcp_agent = Agent(
     name="gcp_agent",
-    system_prompt="""You are a Google Cloud Platform specialist agent focused on GCP operations.
-Your expertise includes Compute Engine, GKE, Cloud Storage, Cloud SQL, BigQuery, Cloud Functions, and all GCP services.
-Use 'use_gcp' tool with gcloud commands (e.g., use_gcp('compute instances list')) to manage resources.
-Hand off tasks to other cloud specialists when they involve AWS or Azure.""",
+    system_prompt=GCP_AGENT_PROMPT,
     tools=[use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info]
 )
 
 coding_agent = Agent(
     name="coding_agent",
-    system_prompt="""You are a specialized coding agent focused on software development and code analysis.
-Your expertise includes code generation, debugging, refactoring, testing, and development workflows.
-Use Claude Code SDK for complex development tasks requiring file operations, code analysis, or system commands.
-Hand off cloud-specific tasks to appropriate cloud specialists (AWS, Azure, GCP).""",
+    system_prompt=CODING_AGENT_PROMPT,
     tools=[claude_code]
 )
 
@@ -75,10 +69,7 @@ atlassian = atlassian_mcp_client.list_tools_sync()
 # Create Atlassian agent with MCP tools
 atlassian_agent = Agent(
     name="atlassian_agent",
-    system_prompt="""You are an Atlassian specialist agent focused on Jira and Confluence operations.
-Your expertise includes managing Jira issues, projects, workflows, and Confluence pages and spaces.
-Use the available MCP tools to interact with Jira and Confluence.
-Hand off tasks to other specialists when they don't involve Atlassian products.""",
+    system_prompt=ATLASSIAN_AGENT_PROMPT,
     tools=[atlassian]
 )
 
