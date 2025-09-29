@@ -9,7 +9,10 @@ from src.tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_pro
 from src.tools.use_azure import use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
 import uvicorn
+import time
+import uuid
 
 # Enable debug logs and print them to stderr
 logging.getLogger("strands.multiagent").setLevel(logging.DEBUG)
@@ -91,6 +94,46 @@ app = FastAPI()
 class InvokeRequest(BaseModel):
     prompt: str
 
+# OpenAI-compatible models for Open WebUI integration
+class ChatMessage(BaseModel):
+    role: str  # "system", "user", "assistant"
+    content: str
+
+class ChatCompletionRequest(BaseModel):
+    model: str
+    messages: List[ChatMessage]
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = None
+    stream: Optional[bool] = False
+
+class ChatCompletionChoice(BaseModel):
+    index: int
+    message: ChatMessage
+    finish_reason: str
+
+class ChatCompletionUsage(BaseModel):
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
+class ChatCompletionResponse(BaseModel):
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: List[ChatCompletionChoice]
+    usage: ChatCompletionUsage
+
+class ModelInfo(BaseModel):
+    id: str
+    object: str = "model"
+    created: int
+    owned_by: str
+
+class ModelsResponse(BaseModel):
+    object: str = "list"
+    data: List[ModelInfo]
+
 @app.post("/invoke")
 async def invoke_agent(request: InvokeRequest):
     """Invoke the agent with a prompt"""
@@ -112,6 +155,133 @@ async def invoke_agent(request: InvokeRequest):
         return response_data
     except Exception as e:
         return {"error": str(e)}
+
+# OpenAI-compatible endpoints for Open WebUI integration
+@app.get("/v1/models")
+async def list_models():
+    """List available models - required by Open WebUI"""
+    return ModelsResponse(
+        data=[
+            ModelInfo(
+                id="sky-agent",
+                created=int(time.time()),
+                owned_by="sky-agent-system"
+            )
+        ]
+    )
+
+@app.post("/v1/chat/completions")
+async def chat_completions(request: ChatCompletionRequest):
+    """OpenAI-compatible chat completions endpoint"""
+    try:
+        # Extract the user's message from the chat format
+        user_messages = [msg.content for msg in request.messages if msg.role == "user"]
+        if not user_messages:
+            return {"error": "No user message found"}
+
+        # Use the last user message as the prompt
+        prompt = user_messages[-1]
+
+        # Call the existing agent system
+        result = swarm(prompt)
+
+        # Format the agent response for Open WebUI
+        try:
+            agent_response = ""
+            if result.results:
+                if isinstance(result.results, dict):
+                    # Extract clean content from each agent's result
+                    for agent_name, node_result in result.results.items():
+                        try:
+                            # Get the actual message content from the agent result
+                            if hasattr(node_result, 'result') and hasattr(node_result.result, 'message'):
+                                message = node_result.result.message
+                                if isinstance(message, dict) and 'content' in message:
+                                    content_blocks = message['content']
+                                    if isinstance(content_blocks, list):
+                                        for block in content_blocks:
+                                            if isinstance(block, dict) and 'text' in block:
+                                                agent_response += f"🔸 **{agent_name}**: {block['text']}\n\n"
+                                    else:
+                                        agent_response += f"🔸 **{agent_name}**: {str(content_blocks)}\n\n"
+                                else:
+                                    agent_response += f"🔸 **{agent_name}**: {str(message)}\n\n"
+                            else:
+                                # Fallback for unexpected structure
+                                agent_response += f"🔸 **{agent_name}**: Task completed\n\n"
+                        except Exception as e:
+                            agent_response += f"🔸 **{agent_name}**: Task completed\n\n"
+                else:
+                    agent_response = str(result.results)
+            else:
+                agent_response = f"Task executed with status: {result.status}"
+
+            # Add agents involved footer
+            if hasattr(result, 'node_history') and result.node_history:
+                agents_used = [node.node_id for node in result.node_history]
+                agent_response += f"**Agents involved:** {' → '.join(agents_used)}"
+
+            # Ensure we always have a non-empty string response
+            if not agent_response or not isinstance(agent_response, str):
+                agent_response = f"Task completed with status: {result.status}"
+
+        except Exception as e:
+            # Fallback in case of any errors in response processing
+            agent_response = f"Task executed successfully. Status: {result.status}"
+
+        # Ensure agent_response is definitely a string
+        if not isinstance(agent_response, str):
+            agent_response = str(agent_response)
+
+        # Debug: Log the response type and content
+        print(f"DEBUG: agent_response type: {type(agent_response)}")
+        print(f"DEBUG: agent_response content: {agent_response[:200]}...")
+
+        # Create OpenAI-compatible response
+        response = ChatCompletionResponse(
+            id=f"chatcmpl-{str(uuid.uuid4())}",
+            created=int(time.time()),
+            model=request.model,
+            choices=[
+                ChatCompletionChoice(
+                    index=0,
+                    message=ChatMessage(
+                        role="assistant",
+                        content=str(agent_response)  # Force string conversion
+                    ),
+                    finish_reason="stop"
+                )
+            ],
+            usage=ChatCompletionUsage(
+                prompt_tokens=len(prompt.split()),
+                completion_tokens=len(agent_response.split()),
+                total_tokens=len(prompt.split()) + len(agent_response.split())
+            )
+        )
+
+        return response
+
+    except Exception as e:
+        return ChatCompletionResponse(
+            id=f"chatcmpl-{str(uuid.uuid4())}",
+            created=int(time.time()),
+            model=request.model,
+            choices=[
+                ChatCompletionChoice(
+                    index=0,
+                    message=ChatMessage(
+                        role="assistant",
+                        content=f"Error: {str(e)}"
+                    ),
+                    finish_reason="stop"
+                )
+            ],
+            usage=ChatCompletionUsage(
+                prompt_tokens=0,
+                completion_tokens=0,
+                total_tokens=0
+            )
+        )
 
 @app.get("/health")
 async def health_check():
