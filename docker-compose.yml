@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
     depends_on:
       - atlassian
-      - github
+      - mcp-proxy
 
   atlassian:
     build:
@@ -26,20 +26,16 @@ services:
     tty: true
     restart: unless-stopped
 
-  github:
+  mcp-proxy:
     build:
       context: .
-      dockerfile: ./mcp-servers/Dockerfile.github
+      dockerfile: ./mcp-servers/Dockerfile.mcp-proxy
     ports:
-      - "9001:9001"
+      - "8090:8090"
     volumes:
       - ./keys:/app/keys:ro
-    env_file:
-      - .env
-    environment:
-      - GITHUB_TOOLSETS=all
-      - GITHUB_DYNAMIC_TOOLSETS=1
-      - GITHUB_READ_ONLY=1
+    depends_on:
+      - atlassian
     restart: unless-stopped
 
   open-webui:

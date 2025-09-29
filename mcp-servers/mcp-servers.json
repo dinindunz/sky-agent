@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "atlassian": {
+      "command": "/root/.local/bin/mcp-proxy",
+      "args": [
+        "http://atlassian:9000/sse"
+      ]
+    },
+    "github": {
+      "command": "/usr/local/bin/github-mcp-server",
+      "args": ["stdio"]
+    }
+  }
+}

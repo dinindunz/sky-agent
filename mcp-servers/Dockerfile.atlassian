@@ -11,27 +11,15 @@ WORKDIR /app
 # Copy Atlassian configuration
 COPY keys/atlassian.json /app/keys/atlassian.json
 
-# Create entrypoint script that sets environment variables
-RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
-    echo 'if [ -f "/app/keys/atlassian.json" ]; then' >> /app/entrypoint.sh && \
-    echo '  export CONFLUENCE_URL=$(cat /app/keys/atlassian.json | jq -r ".instanceUrl")' >> /app/entrypoint.sh && \
-    echo '  export CONFLUENCE_USERNAME=$(cat /app/keys/atlassian.json | jq -r ".email")' >> /app/entrypoint.sh && \
-    echo '  export CONFLUENCE_API_TOKEN=$(cat /app/keys/atlassian.json | jq -r ".apiToken")' >> /app/entrypoint.sh && \
-    echo '  export JIRA_URL=$(cat /app/keys/atlassian.json | jq -r ".instanceUrl")' >> /app/entrypoint.sh && \
-    echo '  export JIRA_USERNAME=$(cat /app/keys/atlassian.json | jq -r ".email")' >> /app/entrypoint.sh && \
-    echo '  export JIRA_API_TOKEN=$(cat /app/keys/atlassian.json | jq -r ".apiToken")' >> /app/entrypoint.sh && \
-    echo '  echo "Environment variables set from atlassian.json"' >> /app/entrypoint.sh && \
-    echo 'else' >> /app/entrypoint.sh && \
-    echo '  echo "Warning: Atlassian config not found at /app/keys/atlassian.json"' >> /app/entrypoint.sh && \
-    echo 'fi' >> /app/entrypoint.sh && \
-    echo 'exec /app/.venv/bin/mcp-atlassian "$@"' >> /app/entrypoint.sh && \
-    chmod +x /app/entrypoint.sh
+# Copy and setup entrypoint script
+COPY mcp-servers/entrypoint-atlassian.sh /app/entrypoint-atlassian.sh
+RUN chmod +x /app/entrypoint-atlassian.sh
 
 # Expose the MCP server port
 EXPOSE 9000
 
 # Use entrypoint script
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint-atlassian.sh"]
 
-# Default command with streamable HTTP transport
-CMD ["--transport", "streamable-http", "--port", "9000", "-vv"]
+# Default command with sse transport
+CMD ["--transport", "sse", "--port", "9000", "-vv"]

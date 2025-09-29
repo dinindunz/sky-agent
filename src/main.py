@@ -3,7 +3,7 @@ from strands import Agent
 from strands_tools import use_aws
 from strands.tools.mcp.mcp_client import MCPClient
 from strands.multiagent import Swarm
-from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.sse import sse_client
 from src.tools.claude_code import claude_code
 from src.tools.use_gcp import use_gcp, gcp_auth_status, gcp_set_project, gcp_project_info
 from src.tools.use_azure import use_azure, azure_auth_status, azure_set_subscription, azure_subscription_info, azure_list_subscriptions, azure_set_location
@@ -63,7 +63,7 @@ Hand off cloud-specific tasks to appropriate cloud specialists (AWS, Azure, GCP)
     tools=[claude_code]
 )
 
-atlassian_mcp_client = MCPClient(lambda: streamablehttp_client("http://atlassian:9000/mcp"))
+atlassian_mcp_client = MCPClient(lambda: sse_client("http://mcp-proxy:8090/servers/atlassian/sse"))
 atlassian_mcp_client.start()
 atlassian = atlassian_mcp_client.list_tools_sync()
 
