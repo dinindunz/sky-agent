@@ -27,15 +27,18 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-# github_mcp_client = MCPClient(lambda: sse_client("http://mcp-proxy:8090/servers/github/sse"))
-# github_mcp_client.start()
-# github = github_mcp_client.list_tools_sync()
+atlassian_mcp_client = MCPClient(lambda: sse_client("http://mcp-proxy:8090/servers/atlassian/sse"))
+atlassian_mcp_client.start()
+atlassian = atlassian_mcp_client.list_tools_sync()
+
+github_mcp_client = MCPClient(lambda: sse_client("http://mcp-proxy:8090/servers/github/sse"))
+github_mcp_client.start()
+github = github_mcp_client.list_tools_sync()
 
 # Create specialized cloud agents
 sky_agent = Agent(
     name="sky_agent",
     system_prompt=SKY_AGENT_PROMPT,
-    # tools=[github]
 )
 
 aws_agent = Agent(
@@ -59,12 +62,8 @@ gcp_agent = Agent(
 coding_agent = Agent(
     name="coding_agent",
     system_prompt=CODING_AGENT_PROMPT,
-    tools=[claude_code]
+    tools=[claude_code, github]
 )
-
-atlassian_mcp_client = MCPClient(lambda: sse_client("http://mcp-proxy:8090/servers/atlassian/sse"))
-atlassian_mcp_client.start()
-atlassian = atlassian_mcp_client.list_tools_sync()
 
 # Create Atlassian agent with MCP tools
 atlassian_agent = Agent(

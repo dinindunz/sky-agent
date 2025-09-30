@@ -25,16 +25,10 @@ async def call_claude_sdk(prompt: str) -> str:
         # Configure claude-code-sdk options
         options = ClaudeCodeOptions(
             system_prompt=CLAUDE_CODE_PROMPT,
-            allowed_tools=["mcp__github", "Bash", "Read", "Edit", "WebSearch"],
+            allowed_tools=["Bash", "Read", "Edit", "WebSearch"],
             permission_mode='acceptEdits',
             max_turns=10,
             model="apac.anthropic.claude-sonnet-4-20250514-v1:0",
-            mcp_servers={
-                "github": {
-                    "command": "mcp-proxy",
-                    "args": ["http://mcp-proxy:8090/servers/github/sse"]
-                }
-            },
         )
 
         response_text = ""
